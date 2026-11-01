@@ -394,6 +394,27 @@ int EventStore::duplicate(int id)
 	return 0;
 }
 
+int EventStore::copyToList(int id, int list)
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	if (list < 1 || list > kEventLists)
+		return 0;
+	for (const auto &ev : events_) {
+		if (ev.id == id) {
+			ReplayEvent copy = ev;
+			copy.id = nextId_++;
+			copy.list = list;
+			// Asked before the push_back, like moveToList: the copy must
+			// not count itself when it looks for the end of the list.
+			copy.order = nextOrderFor(list);
+			events_.push_back(copy);
+			save();
+			return copy.id;
+		}
+	}
+	return 0;
+}
+
 int EventStore::lastEventId() const
 {
 	std::lock_guard<std::mutex> lock(mutex_);

@@ -134,6 +134,9 @@ public:
 	// end it is being pushed towards, or the id is unknown. Persisted.
 	bool moveEvent(int id, int delta);
 	int duplicate(int id); // copy gets a new id (the reference controller behaviour)
+	// Copy into another list, appended at its end; the original stays. New id,
+	// or 0 for an unknown id / list out of range.
+	int copyToList(int id, int list);
 
 	// Most recent event by time (the reference controller "last event"), 0 if none.
 	int lastEventId() const;

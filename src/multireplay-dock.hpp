@@ -936,6 +936,9 @@ private:
 	// (and refuses) when it is not. See the definition.
 	bool markable(int64_t tNs);
 	std::vector<int> selectedEventIds() const;
+	// "Move to list" / "Copy to list" submenus for the selected events,
+	// one entry per list the operator has shown (Config.eventListCount).
+	void addListTransferMenus(QMenu *menu);
 	// §7.3.10 — a Delete over threshold asks first, the same way DeleteAll
 	// always has; a short list still goes without asking, since friction on
 	// the common case (one or two events, seconds of footage) is not a
