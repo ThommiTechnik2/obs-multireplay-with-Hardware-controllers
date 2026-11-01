@@ -1790,8 +1790,41 @@ void MultiReplayDock::newProjectDialog()
 		return;
 	}
 	clearBothBays();
+	// A new project is a new start: recording begins with it, whatever an
+	// earlier manual stop decided.
+	ReplayCore::instance().clearStoppedByHand();
+	autoStartRecording("new project");
 	refreshEvents();
 	poll();
+}
+
+void MultiReplayDock::autoStartRecording(const char *why)
+{
+	auto &core = ReplayCore::instance();
+	if (core.isRecording())
+		return;
+	// Somebody stopped it by hand: it stays off until somebody starts it.
+	if (!core.autoRecordAllowed()) {
+		obs_log(LOG_INFO,
+			"[dock] auto-record (%s): skipped, recording was stopped by hand",
+			why);
+		return;
+	}
+	// Without an open project there is nothing to start WITH.
+	if (core.getConfig().currentProjectName.empty())
+		return;
+	std::string err;
+	if (core.startRecording(err)) {
+		obs_log(LOG_INFO, "[dock] auto-record (%s): recording started",
+			why);
+		return;
+	}
+	// Refused (a source gone, a full disk...). Not a modal box: this runs
+	// without anybody having pressed anything. The strip says "REC OFF" and
+	// the notice says why.
+	obs_log(LOG_WARNING, "[dock] auto-record (%s): refused: %s", why,
+		err.c_str());
+	showNotice(localizedError(err));
 }
 
 void MultiReplayDock::clearBothBays()
@@ -1848,6 +1881,10 @@ void MultiReplayDock::openProjectDialog()
 	// Both bays first: whatever they were showing belonged to the project being
 	// left, and it must not survive into this one.
 	clearBothBays();
+	// Opening a project is a start of that project: recording begins with it,
+	// whatever an earlier manual stop (which opening a project required) said.
+	ReplayCore::instance().clearStoppedByHand();
+	autoStartRecording("project opened");
 	// poll() FIRST: it reads the newly loaded anchors and seats the project
 	// origin the table is drawn against. Rebuilding the table before that
 	// rendered the just-loaded marks against an origin of 0 — raw monotonic

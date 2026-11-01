@@ -1367,8 +1367,21 @@ KeyBlock *MultiReplayDock::buildRecBlock()
 	connect(recBtn_, &QPushButton::clicked, this, [this]() {
 		auto &core = ReplayCore::instance();
 		if (core.isRecording()) {
+			// Recording starts with the project now, so this key is the
+			// one way to interrupt it — and a stray click must not cost
+			// the footage. The answer defaults to No.
+			if (QMessageBox::question(
+				    this, "obs-multireplay",
+				    obs_module_text("Dock.ConfirmStopRec"),
+				    QMessageBox::Yes | QMessageBox::No,
+				    QMessageBox::No) != QMessageBox::Yes)
+				return;
+			// A decision, not an accident: it stays off until somebody
+			// starts it again by hand.
+			core.noteStoppedByHand();
 			core.stopRecording();
 		} else {
+			core.clearStoppedByHand();
 			// Stop any event playing BEFORE arming: a new take must
 			// not start while a clip is still being paced into the
 			// replay input.

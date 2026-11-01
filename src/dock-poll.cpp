@@ -636,6 +636,16 @@ void MultiReplayDock::poll()
 			QTimer::singleShot(0, this,
 					   [this]() { runSetupWizard(); });
 	}
+	// RECORDING STARTS WITH THE PROJECT: once per launch, a little after the
+	// two dialogs above have had their chance, if a project is open. Never
+	// when the plugin is not set up (the take would only be refused), never
+	// while a dialog is open, and never after somebody stopped it by hand.
+	if (!autoRecordTried_ && setupAsked_ && !modalOpen_ &&
+	    statusTick_ > 180 && !selfTestIsDriving()) {
+		autoRecordTried_ = true;
+		if (!needsSetup())
+			autoStartRecording("launch");
+	}
 	// The hotkeys change the angle without going through the dock.
 	const int hotAngle1 = core.currentAngle() + 1;
 	if (hotAngle1 >= 1 && hotAngle1 <= kNCams)
@@ -1334,6 +1344,13 @@ void MultiReplayDock::poll()
 				    .arg(ver)
 				    .arg(rec ? obs_module_text("Dock.Recording")
 					     : obs_module_text("Dock.Idle"));
+		// A PROJECT IS OPEN AND NOTHING IS BEING RECORDED: with recording
+		// starting by itself, that is not the resting state any more, it is
+		// something somebody did (or a start that was refused). Said in the
+		// line the operator already reads for the remaining time.
+		if (!rec && !core.getConfig().currentProjectName.empty())
+			s = QStringLiteral("⚠ ") +
+				QString::fromUtf8(obs_module_text("Dock.RecOff"));
 		statusLbl_->setText(s);
 	}
 

@@ -198,6 +198,26 @@ public:
 	void rememberPreviousScene(const std::string &name);
 	std::string takePreviousScene();
 
+	// --- TAKE: handing Program from one bay to the other -----------------
+	// Is this bay's queue the one that holds Program right now (a sequence
+	// started "to output" that has not ended)? The dock asks both bays to
+	// find out which one is PGM and which is PVW.
+	bool onProgram() const;
+	// The scene Program returns to when this bay's sequence ends, without
+	// consuming it. Empty when this bay has not taken Program.
+	std::string previousScene() const;
+	// Tell the NEXT switch-to-replay-scene task to record `name` as the scene
+	// to go back to instead of the scene it finds on air. A take from the
+	// other bay finds THAT bay's replay scene on air; remembering it would
+	// strand Program on a replay scene at the end instead of putting the
+	// operator's own scene back. One-shot: the task consumes it. Empty clears.
+	void inheritPreviousScene(const std::string &name);
+	std::string takeInheritedScene();
+	// This bay stops and gives up Program WITHOUT putting the previous scene
+	// back, because the other bay has just taken Program and will put it back
+	// itself. Only call it after that bay's play was accepted.
+	void handOverProgram();
+
 private:
 	explicit PlaybackCoordinator(Which which = Which::A) : which_(which) {}
 	const Which which_ = Which::A;
@@ -296,6 +316,8 @@ private:
 	// writes it and the coordinator thread reads it.
 	mutable std::mutex sceneMutex_;
 	std::string previousSceneName_;
+	// See inheritPreviousScene(). Guarded by sceneMutex_ like the name above.
+	std::string inheritedSceneName_;
 	// Why the last startNext() could not play an item. Kept so a play request
 	// that ends up queueing nothing can tell the operator WHICH camera failed
 	// and what the engine said, instead of a generic refusal he cannot act on.

@@ -3382,6 +3382,10 @@ void MultiReplayDock::registerDockHotkeys()
 		// he has just taken.
 		{"ReplayPlaySelected", "Hotkey.PlaySelected",
 		 [](MultiReplayDock *d) { d->playSelected(); }},
+		// TAKE: the clip prepared on the free bay goes to Program. On the
+		// JLCooper's REPLAY key.
+		{"ReplayTake", "Hotkey.Take",
+		 [](MultiReplayDock *d) { d->takeToProgram(); }},
 		{"ReplayStepForward", "Hotkey.StepForward",
 		 [](MultiReplayDock *d) { d->stepFrameForward(); }},
 		// Both frame keys, because finding the right frame means going
@@ -3734,6 +3738,78 @@ void MultiReplayDock::playSelected()
 	if (!playOnTargets(selectedEventIds(),
 			   ReplayChannel::Direction::Forward, err))
 		showNotice(localizedError(err));
+}
+
+void MultiReplayDock::takeToProgram()
+{
+	// A free review that is armed (the bar parked on unmarked footage) is what
+	// Take puts on air, exactly like the play key does when "In output" is on.
+	if (freeReviewInNs_ != kNoInstant) {
+		playheadNs_ = freeReviewInNs_;
+		playFreeReview(true);
+		return;
+	}
+
+	auto &core = ReplayCore::instance();
+	const auto cfg = core.getConfig();
+
+	// WHAT IS PREPARED is what the list has selected: a row is cued into the
+	// bay that is not live the moment it is picked (cueSelected). With nothing
+	// selected the newest mark is what an operator means, same as the play key.
+	std::vector<int> ids = selectedEventIds();
+	if (ids.empty()) {
+		const int last = EventStore::instance().lastEventId();
+		if (last > 0)
+			ids.push_back(last);
+	}
+	if (ids.empty()) {
+		showNotice(obs_module_text("Dock.TakeNothingCued"));
+		return;
+	}
+
+	// WHICH BAY IS TAKEN. The one that is not holding Program. With neither on
+	// Program, the bay Settings names for the A|B output; with one bay, A.
+	Which target = Which::A;
+	if (cfg.enableChannelB) {
+		if (PlaybackCoordinator::instance(Which::A).onProgram())
+			target = Which::B;
+		else if (PlaybackCoordinator::instance(Which::B).onProgram())
+			target = Which::A;
+		else
+			target = cfg.abOutputUsesB ? Which::B : Which::A;
+	}
+	const Which other = target == Which::A ? Which::B : Which::A;
+	auto &pt = PlaybackCoordinator::instance(target);
+	auto &po = PlaybackCoordinator::instance(other);
+	const bool handOver = cfg.enableChannelB && po.onProgram();
+
+	// The scene Program goes back to when this clip ends is the one the OTHER
+	// bay had remembered, not that bay's replay scene (which is what is on air
+	// now). Set before the play, which posts the switch that reads it.
+	if (handOver)
+		pt.inheritPreviousScene(po.previousScene());
+
+	clearFreeReview();
+	std::string err;
+	if (!pt.playEvents(ids, angle1_[(int)target] - 1, true, err,
+			   PlaybackCoordinator::AngleMode::AllEnabled,
+			   ReplayChannel::Direction::Forward)) {
+		// Nothing changed: the bay that was on Program still is.
+		pt.inheritPreviousScene(std::string());
+		showNotice(localizedError(err));
+		return;
+	}
+	// Only now, with the new bay accepted, does the old one let go. It stops
+	// without putting the previous scene back (the new bay does that at its
+	// end) and is then free for the next cue.
+	if (handOver)
+		po.handOverProgram();
+
+	obs_log(LOG_INFO, "[dock] take: bay %s on Program (event %d)%s",
+		channelLetter(target), ids.front(),
+		handOver ? ", previous bay released" : "");
+	showNotice(QString(obs_module_text("Dock.TakeOn"))
+			   .arg(QString::fromLatin1(channelLetter(target))));
 }
 
 void MultiReplayDock::setAngle(int angle1Based)

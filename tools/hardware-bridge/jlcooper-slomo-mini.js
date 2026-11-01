@@ -69,19 +69,14 @@ const BUTTON_NAMES = {
 // ---------------------------------------------------------------------------
 let shiftHeld = false;
 let lastSpeedPct = null;
-// The last get_playback_status answer, refreshed with the display. REC toggles
-// against it rather than against a flag of our own, which would drift the first
-// time recording is started from the panel.
+// The last get_playback_status answer, refreshed with the display. Recording
+// is no longer started or stopped from this panel (it starts with the project;
+// the REC key in the OBS panel interrupts it), but the status is still read.
 let lastStatus = null;
 
 function selectCamera(baseNumber) {
   const cam = shiftHeld ? baseNumber + 4 : baseNumber;
   triggerHotkey(`ReplayACamera${cam}`);
-}
-
-function toggleRecording() {
-  const recording = lastStatus ? lastStatus.recording : false;
-  triggerHotkey(recording ? 'MultiReplayStopRecording' : 'MultiReplayStartRecording');
 }
 
 function stepList(delta) {
@@ -102,7 +97,8 @@ const BUTTON_ACTIONS = {
   'cam-b': () => selectCamera(2),
   'cam-c': () => selectCamera(3),
   'cam-d': () => selectCamera(4),
-  replay: () => toggleRecording(),
+  // TAKE: the clip prepared on the free bay goes to Program (EVS-style).
+  replay: () => triggerHotkey('ReplayTake'),
   stop: () => triggerHotkey('ReplayStopEvents'),
   'reverse-play': () => triggerHotkey('ReplayPlayReverse'),
   'cycle-player': () => callVendor('toggle_active_channel'),

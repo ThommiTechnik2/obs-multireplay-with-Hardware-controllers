@@ -117,6 +117,8 @@ void onStartHotkey(void *, obs_hotkey_id, obs_hotkey_t *, bool pressed)
 	if (!pressed)
 		return;
 	std::string err;
+	// Started by hand: whatever an earlier manual stop decided is over.
+	ReplayCore::instance().clearStoppedByHand();
 	ReplayCore::instance().startRecording(err);
 }
 
@@ -124,6 +126,8 @@ void onStopHotkey(void *, obs_hotkey_id, obs_hotkey_t *, bool pressed)
 {
 	if (!pressed)
 		return;
+	// Stopped by hand: recording stays off until somebody starts it again.
+	ReplayCore::instance().noteStoppedByHand();
 	ReplayCore::instance().stopRecording();
 }
 

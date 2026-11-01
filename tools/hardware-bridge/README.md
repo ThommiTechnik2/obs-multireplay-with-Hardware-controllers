@@ -53,7 +53,7 @@ script to your project's rate.
 | `FRAME -1` / `FRAME +1` | One frame back / forward |
 | `CAM A`…`CAM D` | Camera 1–4 (with `SHIFT`: 5–8) |
 | `CYCLE PLAYER` | Channel A ↔ B (needs the second bay switched on) |
-| `REPLAY` | REC on/off |
+| `REPLAY` | TAKE: start the clip prepared on the free bay and put it on Program (recording starts with the project and is interrupted with the REC key in the OBS panel) |
 | `LAST CUE` / `NEXT CUE` | Previous / next event |
 | `STORE CUE` | Next list (with `SHIFT`: previous); stops at the first and last shown list |
 | digits + `ENTER` | Jump to the event with that id; `CLR` clears the digits |

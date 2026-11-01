@@ -164,17 +164,26 @@ void switchSceneTask(void *param)
 			return; // program was never taken
 		}
 	} else if (ctx->owner) {
-		obs_source_t *current = obs_frontend_get_current_scene();
-		if (current) {
-			const char *name = obs_source_get_name(current);
-			const std::string cur = name ? name : "";
-			// Re-triggering a replay while the replay scene is
-			// already on air must not record IT as "the scene to go
-			// back to" — that would strand program on the replay
-			// scene once the queue drains.
-			if (cur != target)
-				ctx->owner->rememberPreviousScene(cur);
-			obs_source_release(current);
+		// A TAKE FROM THE OTHER BAY hands over the scene to go back to: what
+		// is on air now is that bay's replay scene, not the operator's own.
+		// Consumed here, on the UI thread, so it is read in queue order.
+		const std::string inherited = ctx->owner->takeInheritedScene();
+		if (!inherited.empty()) {
+			if (inherited != target)
+				ctx->owner->rememberPreviousScene(inherited);
+		} else {
+			obs_source_t *current = obs_frontend_get_current_scene();
+			if (current) {
+				const char *name = obs_source_get_name(current);
+				const std::string cur = name ? name : "";
+				// Re-triggering a replay while the replay scene is
+				// already on air must not record IT as "the scene to
+				// go back to" — that would strand program on the
+				// replay scene once the queue drains.
+				if (cur != target)
+					ctx->owner->rememberPreviousScene(cur);
+				obs_source_release(current);
+			}
 		}
 	}
 
@@ -1205,6 +1214,43 @@ std::string PlaybackCoordinator::takePreviousScene()
 	std::string out;
 	out.swap(previousSceneName_);
 	return out;
+}
+
+bool PlaybackCoordinator::onProgram() const
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	return active_ && toOutput_;
+}
+
+std::string PlaybackCoordinator::previousScene() const
+{
+	std::lock_guard<std::mutex> lock(sceneMutex_);
+	return previousSceneName_;
+}
+
+void PlaybackCoordinator::inheritPreviousScene(const std::string &name)
+{
+	std::lock_guard<std::mutex> lock(sceneMutex_);
+	inheritedSceneName_ = name;
+}
+
+std::string PlaybackCoordinator::takeInheritedScene()
+{
+	std::lock_guard<std::mutex> lock(sceneMutex_);
+	std::string out;
+	out.swap(inheritedSceneName_);
+	return out;
+}
+
+void PlaybackCoordinator::handOverProgram()
+{
+	// The scene to go back to now belongs to the bay that took Program. Drop
+	// it here so the restore that stopEvents() posts finds nothing and leaves
+	// Program alone ("program was never taken" in switchSceneTask) instead of
+	// cutting back to the operator's scene a moment before the other bay's
+	// scene arrives.
+	takePreviousScene();
+	stopEvents();
 }
 
 } // namespace multireplay

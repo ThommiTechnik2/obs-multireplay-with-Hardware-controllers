@@ -263,6 +263,16 @@ public:
 	bool startRecording(std::string &errorOut);
 	bool stopRecording();
 	bool isRecording() const { return recording_; }
+	// RECORDING STARTS WITH THE PROJECT, and stays off once somebody has
+	// stopped it by hand (the REC key in the panel or the stop hotkey) until
+	// somebody starts it again by hand or opens/creates a project. These three
+	// are the memory of that: the dock asks autoRecordAllowed() before it starts
+	// a take on its own. Set by the two manual stop paths only — a stop the
+	// plugin does itself (leaving OBS, a scene collection change) is not a
+	// decision and must not suppress the next automatic start.
+	bool autoRecordAllowed() const { return !stoppedByHand_.load(); }
+	void noteStoppedByHand() { stoppedByHand_.store(true); }
+	void clearStoppedByHand() { stoppedByHand_.store(false); }
 	// Is Branch Output really recording, on at least one armed camera?
 	//
 	// isRecording() only says WE armed the filters. Branch Output starts (or
@@ -386,6 +396,7 @@ private:
 	bool recording_ = false;
 	std::atomic<int> currentAngle_{0};   // 0-based, see currentAngle()
 	std::atomic<bool> followLive_{true}; // see followLive()
+	std::atomic<bool> stoppedByHand_{false}; // see autoRecordAllowed()
 	std::atomic<int64_t> epochMasterNs_{0}; // see sessionEpoch()
 	std::atomic<int64_t> epochWallNs_{0};
 	std::array<CameraStatus, kMaxCameras> cameraStatus_{};

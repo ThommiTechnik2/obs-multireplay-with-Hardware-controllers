@@ -949,6 +949,12 @@ private:
 	// See the .cpp.
 	void runSetupWizard();
 	bool setupAsked_ = false;
+	// RECORDING STARTS WITH THE PROJECT (new, opened, or the one OBS comes
+	// back to). Starts a take on its own unless one is running, no project is
+	// open, or somebody stopped it by hand; a refusal is said in the strip
+	// (non-modal) and logged. `why` goes to the log only.
+	void autoStartRecording(const char *why);
+	bool autoRecordTried_ = false; // once per launch, see poll()
 	// True for the whole life of a first-run dialog, so the second one cannot
 	// open on top of the first. Two modal dialogs stacked on a fresh machine
 	// is worse than either of them.
@@ -981,6 +987,12 @@ private:
 	// The "Play selected" button, factored out so the hotkey of the same name
 	// runs the same code (selection, angle and "to output" all included).
 	void playSelected();
+	// TAKE (the EVS key): start the clip that was prepared on the bay that is
+	// NOT on Program and put THAT bay on Program. With two bays the bay that
+	// was on Program stops and becomes the one to prepare next; with one bay
+	// it plays the selection to Program. Same code for the hotkey and the
+	// JLCooper's REPLAY key.
+	void takeToProgram();
 	// Move the list selection by `delta`, clamped. Two relative hotkeys beat
 	// twenty absolute ones.
 	void stepList(int delta);
