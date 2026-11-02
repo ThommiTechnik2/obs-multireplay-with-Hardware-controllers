@@ -1511,6 +1511,47 @@ KeyBlock *MultiReplayDock::buildSpeedBlock()
 // THE RUNNING ORDER, and the actions that have no key of their own
 // ---------------------------------------------------------------------------
 
+// "Move to list" / "Copy to list" (issue #11). Each submenu fills itself when
+// it opens, because list names and the list on screen change under a menu that
+// is built once. Only SHOWN lists are offered (the others are hidden, not
+// emptied: a clip sent there would vanish from view). The list already on
+// screen is greyed rather than removed, so the menu keeps one shape.
+void MultiReplayDock::addListTransferMenus(QMenu *menu)
+{
+	for (const bool move : {true, false}) {
+		QMenu *sub = menu->addMenu(obs_module_text(
+			move ? "Dock.MoveToList" : "Dock.CopyToList"));
+		connect(sub, &QMenu::aboutToShow, this, [this, sub, move]() {
+			sub->clear();
+			auto &store = EventStore::instance();
+			const int shown = std::clamp(
+				ReplayCore::instance().getConfig().eventListCount,
+				1, kEventLists);
+			for (int l = 1; l <= shown; l++) {
+				const std::string nm = store.listName(l);
+				QAction *a = sub->addAction(
+					nm.empty()
+						? QString::number(l)
+						: QString("%1 %2").arg(l).arg(
+							  QString::fromStdString(
+								  nm)));
+				a->setEnabled(l != store.selectedList());
+				connect(a, &QAction::triggered, this,
+					[this, l, move]() {
+						auto &s = EventStore::instance();
+						for (int id : selectedEventIds()) {
+							if (move)
+								s.moveToList(id, l);
+							else
+								s.copyToList(id, l);
+						}
+						refreshEvents();
+					});
+			}
+		});
+	}
+}
+
 KeyBlock *MultiReplayDock::buildExportBlock()
 {
 	auto *blk = new KeyBlock(obs_module_text("Dock.ZoneClips"), this);
@@ -1550,6 +1591,7 @@ KeyBlock *MultiReplayDock::buildExportBlock()
 	{
 		auto *menu = new QMenu(edit);
 		auto *actDup = menu->addAction(obs_module_text("Dock.Duplicate"));
+		addListTransferMenus(menu);
 		auto *actDel = menu->addAction(obs_module_text("Dock.Delete"));
 		menu->addSeparator();
 		auto *actAll = menu->addAction(obs_module_text("Dock.DeleteAll"));
@@ -2091,6 +2133,7 @@ QWidget *MultiReplayDock::buildEvents()
 			QMenu menu(this);
 			QAction *actDup =
 				menu.addAction(obs_module_text("Dock.Duplicate"));
+			addListTransferMenus(&menu);
 			QAction *actDel =
 				menu.addAction(obs_module_text("Dock.Delete"));
 			menu.addSeparator();

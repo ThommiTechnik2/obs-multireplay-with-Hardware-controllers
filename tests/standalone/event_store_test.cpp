@@ -274,6 +274,29 @@ static void test_duplicate_and_last()
 	CHECK(store().lastEventId() == b);
 }
 
+static void test_copy_to_list()
+{
+	reset();
+	int a = store().markIn(100 * S, 0);
+	store().markOut(110 * S);
+	int other = store().markIn(200 * S, 0);
+	store().markOut(210 * S);
+	store().moveToList(other, 3);
+	CHECK(store().copyToList(a, 0) == 0);
+	CHECK(store().copyToList(a, kEventLists + 1) == 0);
+	CHECK(store().copyToList(9999, 3) == 0);
+	int cp = store().copyToList(a, 3);
+	CHECK(cp != 0 && cp != a && cp != other);
+	ReplayEvent orig, copy, o;
+	CHECK(store().get(a, orig));
+	CHECK(store().get(cp, copy));
+	CHECK(store().get(other, o));
+	CHECK(orig.list == 1); // the original stays where it was
+	CHECK(copy.list == 3);
+	CHECK(copy.tInNs == 100 * S && copy.tOutNs == 110 * S);
+	CHECK(copy.order == o.order + 1); // appended after what list 3 had
+}
+
 static void test_description()
 {
 	reset();
@@ -587,6 +610,7 @@ int main()
 	test_angle_speed_is_the_only_speed();
 	test_move_points();
 	test_move_to_list_and_select();
+	test_copy_to_list();
 	test_duplicate_and_last();
 	test_description();
 	test_chapters_text();
