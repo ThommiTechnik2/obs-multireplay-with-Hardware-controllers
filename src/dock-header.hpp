@@ -80,7 +80,9 @@ protected:
 		p.setRenderHint(QPainter::Antialiasing, true);
 		const QColor fg = palette().color(QPalette::WindowText);
 		QColor dim = fg;
-		dim.setAlphaF(0.55);
+		// Qt 6 takes a float; MSVC refuses a double literal here (C4305, an
+		// error under /WX). The f is the whole fix.
+		dim.setAlphaF(0.55f);
 		QColor bg = palette().color(QPalette::Window);
 		const bool dark = bg.lightness() < 128;
 		p.fillRect(rect(), dark ? bg.lighter(112) : bg.darker(104));
