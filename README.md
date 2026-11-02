@@ -27,15 +27,15 @@ The panel adapts to the room it is given — three arrangements, one codebase, j
 </div>
 
 > [!TIP]
-> **1.0.0 is the first stable release.** As with any new tool in a gallery, run it
-> on a rehearsal before the first live match. Hit a
+> **This is a stable release.** As with any new tool in a gallery, run each new
+> version on a rehearsal before the first live match. Hit a
 > problem? [Open an issue](https://github.com/angeloruggieridj/obs-multireplay/issues/new)
 > and **attach the OBS log** (Help ▸ Log Files ▸ Show Log Files) — without it
 > almost nothing can be diagnosed.
 
 > [!TIP]
-> **La 1.0.0 è la prima release stabile.** Come per ogni strumento nuovo in regia,
-> provala su una prova generale prima della prima partita in diretta. Problemi?
+> **Questa è una release stabile.** Come per ogni strumento nuovo in regia,
+> provane ogni nuova versione su una prova generale prima della partita in diretta. Problemi?
 > [Apri una issue](https://github.com/angeloruggieridj/obs-multireplay/issues/new)
 > e **allega il log di OBS** (Aiuto ▸ File di log ▸ Mostra i file di log) — senza,
 > non si diagnostica quasi niente.
@@ -130,7 +130,7 @@ and keeps the last minutes of them in a bounded ring in RAM.
 <!-- obs-compat:start -->
 | | |
 |---|---|
-| **OBS Studio** | **32.0 – 33.0.0** |
+| **OBS Studio** | **32.0 – 33.0.1** |
 | **Verified by** | Compile and link against each version's OBS SDK in CI — not a runtime test. |
 | **Built against** | 31.1.1 (the OBS SDK the released binaries are compiled with) |
 | **Branch Output** | [Download](https://github.com/OPENSPHERE-Inc/branch-output/releases) · [repository](https://github.com/OPENSPHERE-Inc/branch-output) — the recording layer; MultiReplay does nothing without it |
@@ -145,6 +145,7 @@ and keeps the last minutes of them in a bounded ring in RAM.
 | `32.1.0` | ✅ compiles and links | Ubuntu 24.04 |
 | `32.2.0` | ✅ compiles and links | Ubuntu 24.04 |
 | `33.0.0` | ✅ compiles and links | Ubuntu 26.04 (container) |
+| `33.0.1` | ✅ compiles and links | Ubuntu 26.04 (container) |
 
 Generated from [`obs-compat.json`](obs-compat.json) by `tools/obs_compat.py`.
 </details>
@@ -369,7 +370,7 @@ tiene gli ultimi minuti in un buffer circolare in RAM.
 <!-- obs-compat-it:start -->
 | | |
 |---|---|
-| **OBS Studio** | **32.0 – 33.0.0** |
+| **OBS Studio** | **32.0 – 33.0.1** |
 | **Verificato da** | Compilazione e link contro l'SDK di ogni versione di OBS in CI — non è un test a runtime. |
 | **Compilato contro** | 31.1.1 (l'SDK di OBS con cui sono compilate le build pubblicate) |
 | **Branch Output** | [Download](https://github.com/OPENSPHERE-Inc/branch-output/releases) · [repository](https://github.com/OPENSPHERE-Inc/branch-output) — è lo strato che registra, e senza di lui MultiReplay non fa niente |
@@ -384,6 +385,7 @@ tiene gli ultimi minuti in un buffer circolare in RAM.
 | `32.1.0` | ✅ compila e linka | Ubuntu 24.04 |
 | `32.2.0` | ✅ compila e linka | Ubuntu 24.04 |
 | `33.0.0` | ✅ compila e linka | Ubuntu 26.04 (container) |
+| `33.0.1` | ✅ compila e linka | Ubuntu 26.04 (container) |
 
 Generato da [`obs-compat.json`](obs-compat.json) con `tools/obs_compat.py`.
 </details>
